@@ -27,7 +27,7 @@ pipeline {
                 script {
                     checkout([$class: 'GitSCM', branches: [[name: "*/${env.BRANCH_NAME}"]],
                         doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [],
-                        userRemoteConfigs: [[url: 'https://github.com/cookie3029/Test-Project.git',
+                        userRemoteConfigs: [[url: 'https://github.com/cookie3029/TestProject.git',
                         credentialsId: 'github-credentials']]])
                 }
             }
