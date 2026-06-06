@@ -138,7 +138,16 @@ pipeline {
 
                     def stagingPort      = env.STAGING_PORT
                     def nginxConfigFile  = (env.TARGET_BRANCH == 'main') ? '/etc/nginx/conf.d/service-url.inc' : '/etc/nginx/conf.d/service-dev-url.inc'
-                    def switchCommand    = "sudo sed -i 's/set \\\$service_url http:\\/\\/127.0.0.1:[0-9]*/set \\\$service_url http:\\/\\/127.0.0.1:${stagingPort}/g' ${nginxConfigFile} && sudo nginx -s reload"
+                    
+                    // 파일이 없으면 초기 내용(set \$service_url ...)을 먼저 생성하고 sed를 실행하도록 유연하게 변경
+                    def switchCommand    = """
+                        if [ ! -f ${nginxConfigFile} ]; then
+                            echo "set \\\$service_url http://127.0.0.1:${stagingPort};" | sudo tee ${nginxConfigFile} > /dev/null
+                        else
+                            sudo sed -i 's/set \\\$service_url http:\\/\\/127.0.0.1:[0-9]*/set \\\$service_url http:\\/\\/127.0.0.1:${stagingPort}/g' ${nginxConfigFile}
+                        fi
+                        sudo nginx -s reload
+                    """.trim()
 
                     withCredentials([sshUserPrivateKey(credentialsId: 'oci-ssh-key',
                                      keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
