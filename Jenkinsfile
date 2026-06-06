@@ -139,19 +139,20 @@ pipeline {
                     def stagingPort      = env.STAGING_PORT
                     def nginxConfigFile  = (env.TARGET_BRANCH == 'main') ? '/etc/nginx/conf.d/service-url.inc' : '/etc/nginx/conf.d/service-dev-url.inc'
                     
-                    // 파일이 없으면 빈 파일을 생성하고(touch), 초기값이 없으면 넣어준 뒤 sed 치환 실행
-                    def switchCommand    = """
-                        sudo touch ${nginxConfigFile}; \
-                        if ! grep -q 'service_url' ${nginxConfigFile}; then echo "set \\\$service_url http://127.0.0.1:${stagingPort};" | sudo tee ${nginxConfigFile} > /dev/null; fi; \
-                        sudo sed -i 's|set \\\$service_url http://127.0.0.1:[0-9]*|set \\\$service_url http://127.0.0.1:${stagingPort}|g' ${nginxConfigFile} && sudo nginx -s reload
-                    """.trim()
+                    // Jenkins가 이스케이프에 실패하지 않도록 순수 문자열 결합 방식으로 안전하게 조립합니다.
+                    def switchCommand = "sudo touch " + nginxConfigFile + "; " +
+                                        "if ! sudo grep -q 'service_url' " + nginxConfigFile + "; then " +
+                                        "echo 'set \$service_url http://127.0.0.1:" + stagingPort + ";' | sudo tee " + nginxConfigFile + " > /dev/null; " +
+                                        "fi; " +
+                                        "sudo sed -i 's|set \$service_url http://127.0.0.1:[0-9]*|set \$service_url http://127.0.0.1:" + stagingPort + "|g' " + nginxConfigFile + " && " +
+                                        "sudo nginx -s reload"
 
                     withCredentials([sshUserPrivateKey(credentialsId: 'oci-ssh-key',
                                      keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
-                        sh """
-                            echo "===> Switch Nginx → Staging Port ${stagingPort}..."
-                            ssh -i \$SSH_KEY -o StrictHostKeyChecking=no \$SSH_USER@168.107.42.66 "${switchCommand}"
-                        """
+                        sh '''
+                            echo "===> Switch Nginx → Staging Port ''' + stagingPort + '''..."
+                            ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "$SSH_USER"@168.107.42.66 "''' + switchCommand + '''"
+                        '''
                     }
                 }
             }
@@ -195,12 +196,13 @@ pipeline {
                     def nginxConfigFile  = (env.TARGET_BRANCH == 'main') ? '/etc/nginx/conf.d/service-url.inc' : '/etc/nginx/conf.d/service-dev-url.inc'
                     def healthCheckCommand = "for i in \\\$(seq 1 12); do if curl -s http://localhost:${servicePort}/api/health | grep -q 'success'; then exit 0; fi; sleep 5; done; exit 1"
                     
-                    // 안전한 단선 스크립트로 변경
-                    def restoreCommand    = """
-                        sudo touch ${nginxConfigFile}; \
-                        if ! grep -q 'service_url' ${nginxConfigFile}; then echo "set \\\$service_url http://127.0.0.1:${servicePort};" | sudo tee ${nginxConfigFile} > /dev/null; fi; \
-                        sudo sed -i 's|set \\\$service_url http://127.0.0.1:[0-9]*|set \\\$service_url http://127.0.0.1:${servicePort}|g' ${nginxConfigFile} && sudo nginx -s reload
-                    """.trim()
+                    // 순수 문자열 결합 방식으로 탈출 문자($) 완벽 격리
+                    def restoreCommand = "sudo touch " + nginxConfigFile + "; " +
+                                         "if ! sudo grep -q 'service_url' " + nginxConfigFile + "; then " +
+                                         "echo 'set \$service_url http://127.0.0.1:" + servicePort + ";' | sudo tee " + nginxConfigFile + " > /dev/null; " +
+                                         "fi; " +
+                                         "sudo sed -i 's|set \$service_url http://127.0.0.1:[0-9]*|set \$service_url http://127.0.0.1:" + servicePort + "|g' " + nginxConfigFile + " && " +
+                                         "sudo nginx -s reload"
 
                     withCredentials([sshUserPrivateKey(credentialsId: 'oci-ssh-key',
                                      keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
