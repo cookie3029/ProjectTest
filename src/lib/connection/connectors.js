@@ -8,7 +8,7 @@ const redisConnector = {
     const client = await redis.createClient({
       socket: {
         port: envProvider.redis.port,
-        host: envProvider.common.host,
+        host: envProvider.redis.redisHost,
       },
       password: envProvider.common.password,
     });

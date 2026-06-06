@@ -13,12 +13,14 @@ const envProvider = {
   },
   db: {
     id: process.env.DB_ID,
+    dbHost: process.env.DB_HOST,
     port: process.env.DB_PORT,
     dialect: process.env.DB_DIALECT,
     database: process.env.DB_DATABASE,
     redisPassword: process.env.REDIS_PASSWORD,
   },
   redis: {
+    redisHost: process.env.REDIS_HOST,
     port: process.env.REDIS_PORT,
   },
   hash: {
