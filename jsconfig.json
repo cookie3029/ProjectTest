@@ -1,0 +1,40 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es2025",
+    "baseUrl": ".",
+    "paths": {
+      "@lib/*": ["src/lib/*"],
+      "@config/*": ["src/config/*"],
+      "@helper/*": ["src/lib/helper/*"],
+      "@provider/*": ["src/lib/provider/*"],
+      "@connection/*": ["src/lib/connection/*"],
+      "@dao/*": ["src/dao/*"],
+      "@models/*": ["src/models/*"],
+      "@routes/*": ["src/routes/*"],
+      "@service/*": ["src/service/*"],
+      "@controller/*": ["src/controller/*"],
+      "@middleware/*": ["src/middleware/*"],
+      "@adminRequestDTO/*": ["src/dto/request/admin/*"],
+      "@visitorRequestDTO/*": ["src/dto/request/visitor/*"],
+      "@memberRequestDTO/*": ["src/dto/request/member/*"],
+      "@aboutRequestDTO/*": ["src/dto/request/about/*"],
+      "@articleyRequestDTO/*": ["src/dto/request/article/*"],
+      "@inquiryPostRequestDTO/*": ["src/dto/request/inquiryPost/*"],
+      "@inquiryCategoryRequestDTO/*": ["src/dto/request/inquiryCategory/*"],
+      "@articleCategoryRequestDTO/*": ["src/dto/request/articleCategory/*"],
+      "@loginRequestDTO/*": ["src/dto/request/auth/*"],
+      "@adminResponseDTO/*": ["src/dto/response/admin/*"],
+      "@visitorResponseDTO/*": ["src/dto/response/visitor/*"],
+      "@memberResponseDTO/*": ["src/dto/response/member/*"],
+      "@aboutResponseDTO/*": ["src/dto/response/about/*"],
+      "@articleResponseDTO/*": ["src/dto/response/article/*"],
+      "@inquiryPostResponseDTO/*": ["src/dto/response/inquiryPost/*"],
+      "@inquiryCategoryResponseDTO/*": ["src/dto/response/inquiryCategory/*"],
+      "@articleCategoryResponseDTO/*": ["src/dto/response/articleCategory/*"],
+      "@loginResponseDTO/*": ["src/dto/response/login/*"]
+    }
+  },
+  "include": ["**/*"],
+  "exclude": ["node_modules"]
+}
