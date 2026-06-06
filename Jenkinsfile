@@ -138,7 +138,14 @@ pipeline {
 
                     def stagingPort      = env.STAGING_PORT
                     def nginxConfigFile  = (env.TARGET_BRANCH == 'main') ? '/etc/nginx/conf.d/service-url.inc' : '/etc/nginx/conf.d/service-dev-url.inc'
-                    def switchCommand    = "sudo sed -i 's/set \\\$service_url http:\\/\\/127.0.0.1:[0-9]*/set \\\$service_url http:\\/\\/127.0.0.1:${stagingPort}/g' ${nginxConfigFile} && sudo nginx -s reload"
+                    
+                    // Jenkins가 이스케이프에 실패하지 않도록 순수 문자열 결합 방식으로 안전하게 조립합니다.
+                    def switchCommand = "sudo touch " + nginxConfigFile + "; " +
+                                        "if ! sudo grep -q 'service_url' " + nginxConfigFile + "; then " +
+                                        "echo 'set \$service_url http://127.0.0.1:" + stagingPort + ";' | sudo tee " + nginxConfigFile + " > /dev/null; " +
+                                        "fi; " +
+                                        "sudo sed -i 's|set \$service_url http://127.0.0.1:[0-9]*|set \$service_url http://127.0.0.1:" + stagingPort + "|g' " + nginxConfigFile + " && " +
+                                        "sudo nginx -s reload"
 
                     withCredentials([sshUserPrivateKey(credentialsId: 'oci-ssh-key',
                                      keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
@@ -188,7 +195,14 @@ pipeline {
                     def servicePort      = env.SERVICE_PORT
                     def nginxConfigFile  = (env.TARGET_BRANCH == 'main') ? '/etc/nginx/conf.d/service-url.inc' : '/etc/nginx/conf.d/service-dev-url.inc'
                     def healthCheckCommand = "for i in \\\$(seq 1 12); do if curl -s http://localhost:${servicePort}/api/health | grep -q 'success'; then exit 0; fi; sleep 5; done; exit 1"
-                    def restoreCommand    = "sudo sed -i 's/set \\\$service_url http:\\/\\/127.0.0.1:[0-9]*/set \\\$service_url http:\\/\\/127.0.0.1:${servicePort}/g' ${nginxConfigFile} && sudo nginx -s reload"
+                    
+                    // 순수 문자열 결합 방식으로 탈출 문자($) 완벽 격리
+                    def restoreCommand = "sudo touch " + nginxConfigFile + "; " +
+                                         "if ! sudo grep -q 'service_url' " + nginxConfigFile + "; then " +
+                                         "echo 'set \$service_url http://127.0.0.1:" + servicePort + ";' | sudo tee " + nginxConfigFile + " > /dev/null; " +
+                                         "fi; " +
+                                         "sudo sed -i 's|set \$service_url http://127.0.0.1:[0-9]*|set \$service_url http://127.0.0.1:" + servicePort + "|g' " + nginxConfigFile + " && " +
+                                         "sudo nginx -s reload"
 
                     withCredentials([sshUserPrivateKey(credentialsId: 'oci-ssh-key',
                                      keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
