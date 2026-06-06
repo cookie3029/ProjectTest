@@ -41,14 +41,23 @@ pipeline {
                     // 항상 staging 포트로 빌드 (5001 / 5005)
                     def stagingPort = (env.TARGET_BRANCH == 'main') ? '5001' : '5005'
 
-                    def originalContent      = readFile(envFilePath)
-                    def modifiedContent      = originalContent.replaceAll(/(?<=\b)PORT=.*/, "PORT=${stagingPort}")
+                    def originalContent = readFile(envFilePath)
+                    
+                    // 1. PORT 변경 (5000 유지하므로 주석 처리하거나 제거해도 되지만, 안전하게 원본 유지 혹은 코드 맞춤)
+                    // 현재 서버 포트가 5000으로 고정 빌드된다고 하셨으니 PORT 치환은 제외하거나 필요에 따라 두셔도 됩니다.
+                    def modifiedContent = originalContent.replaceAll(/(?<=\b)PORT=.*/, "PORT=5000")
+                    
+                    // 2. ★ 핵심: 호스트 설정을 localhost에서 0.0.0.0으로 강제 변경 ★
+                    modifiedContent = modifiedContent.replaceAll(/(?<=\b)END_POINT=.*/, "END_POINT=0.0.0.0")
+                    modifiedContent = modifiedContent.replaceAll(/(?<=\b)HOST=.*/, "HOST=0.0.0.0")
+
+                    // 3. 브랜치별 DB 분기 처리
                     def renewModifiedContent = (env.TARGET_BRANCH == 'main')
                         ? modifiedContent
                         : modifiedContent.replaceAll(/DB_DATABASE=.*/, "DB_DATABASE=project-dev")
 
                     writeFile(file: env.ENV_COPY_FILE_PATH, text: renewModifiedContent)
-                    echo "✅ [Environment File Preparation Done] PORT=${stagingPort}"
+                    echo "✅ [Environment File Preparation Done] Host bound to 0.0.0.0 for Docker environment"
                 }
             }
         }
